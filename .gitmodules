@@ -1,0 +1,4 @@
+[submodule "HGCalAnalysis"]
+	path = HGCalAnalysis
+	url = git@github.com:artlbv/HGCalAnalysis.git
+	branch = numpy_hits
