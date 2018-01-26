@@ -3,6 +3,8 @@ import sys
 import ROOT, math
 import numpy as np
 
+max_events = 10
+
 def draw_hits(fname):
 
     events = np.load(fname)
@@ -12,19 +14,19 @@ def draw_hits(fname):
     gr_part.SetMarkerColor(ROOT.kOrange-5)
 
     gr_hits = ROOT.TGraph(); n_hits = 0
-    #gr_hits.SetMarkerStyle(7)
+    gr_hits.SetMarkerStyle(6)
     gr_hits.SetMarkerColor(ROOT.kBlue-5)
 
     hitmap = ROOT.TH2F("hitmap_xy","hitmap",41,-20,20,41,-20,20)
     #hitmap = ROOT.TH2F("hitmap_etaphi","hitmap",41,-2,2,41,-2,2)
 
-    for i_ev, event in enumerate(events[:100]):
+    for i_ev, event in enumerate(events[:max_events]):
 
         particles = event[0]
         hits = event[1]
         #print particle, hits
 
-        if len(particles) > 1: continue
+        #if len(particles) > 1: continue
 
         for particle in particles:
             gr_part.SetPoint(n_part, particle[0],particle[1])

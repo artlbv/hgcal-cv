@@ -112,8 +112,8 @@ def cluster_hits(hits):
         #ax.scatter(xyz[:, 0], xyz[:, 1], xyz[:,2], c = tuple(col), s = 14)
 
         ## plot outliers
-        xyz = X[class_member_mask & ~core_samples_mask]
-        ax.scatter(xyz[:, 0], xyz[:, 1], xyz[:,2], c = tuple(col), s = 6)
+        #xyz = X[class_member_mask & ~core_samples_mask]
+        #ax.scatter(xyz[:, 0], xyz[:, 1], xyz[:,2], c = tuple(col), s = 6)
 
     plt.show()
 
