@@ -20,7 +20,7 @@ from wpca import WPCA, EMPCA
 max_events = 10
 max_parts = 10
 
-max_layers = 28
+max_layers = 53
 
 def store_hits(fname = "../ntuples/hgcalNtuple_ele15_n100_testhelper.root"):
 
@@ -50,7 +50,7 @@ def store_hits(fname = "../ntuples/hgcalNtuple_ele15_n100_testhelper.root"):
         selected_genparts &= (event['genpart_energy'] > 5)
         selected_genparts &= (event['genpart_eta'] > 0)
         #selected_genparts &= (event['genpart_eta'] > 2.)
-        selected_genparts &= (abs(event['genpart_pid']) == 22)
+        #selected_genparts &= (abs(event['genpart_pid']) == 22)
         #selected_genparts &= (abs(event['genpart_eta']) > 2.3)
 
         x_arr = event['genpart_posx'][selected_genparts]
@@ -69,11 +69,11 @@ def store_hits(fname = "../ntuples/hgcalNtuple_ele15_n100_testhelper.root"):
         for i_part,xa in enumerate(x_arr):
             #print x_arr[i_part].shape
             if len(x_arr[i_part]) < 1: continue
-            #layers = np.arange(1,40,1)
-            layers = np.array(range(1,max_layers+1))
-            #ax.scatter(x_arr[i_part],layers,y_arr[i_part])
-            #ax.plot(x_arr[i_part][:max_layers],z_arr[i_part][:max_layers],y_arr[i_part][:max_layers], '--r')
-            ax.plot(x_arr[i_part][:max_layers],layers,y_arr[i_part][:max_layers], '--r')
+
+            max_lay = min(40,max_layers)
+            ax.plot(x_arr[i_part][:max_layers],z_arr[i_part][:max_layers],y_arr[i_part][:max_layers], '--r')
+            #layers = np.array(range(1,max_lay+1))
+            #ax.plot(x_arr[i_part][:max_lay],layers,y_arr[i_part][:max_lay], '--r')
 
         if len(x_arr[i_part]) < 1: continue
 
@@ -85,8 +85,8 @@ def store_hits(fname = "../ntuples/hgcalNtuple_ele15_n100_testhelper.root"):
 
         x_arr = event['rechit_x'][sel_hit_indices]
         y_arr = event['rechit_y'][sel_hit_indices]
-        #z_arr = event['rechit_z'][sel_hit_indices]
-        z_arr = event['rechit_layer'][sel_hit_indices]
+        z_arr = event['rechit_z'][sel_hit_indices]
+        #z_arr = event['rechit_layer'][sel_hit_indices]
 
         sample_weights = event['rechit_energy'][sel_hit_indices]
 
