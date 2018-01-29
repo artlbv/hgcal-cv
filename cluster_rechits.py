@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 import sys
-import ROOT, math
+import math
 import numpy as np
-#import cPickle as pickle
 
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
@@ -15,17 +14,19 @@ from root_numpy import root2array, array2tree
 from sklearn.decomposition import PCA
 from wpca import WPCA, EMPCA
 
+from cluster_common import *
+
 #ROOT.gROOT.SetBatch(1)
 
-max_events = 10
-max_parts = 1000
+max_events = 10000
+max_parts = 10000
 
-max_layers = 53
+max_layers = 28
 
 def store_hits(fname = "../ntuples/hgcalNtuple_ele15_n100_testhelper.root"):
 
     #branches = ["genpart_gen","genpart_reachedEE","genpart_pt","genpart_energy","genpart_pid", "genpart_eta", "genpart_phi","genpart_posx","genpart_posy","genpart_posz"]
-    branches = ["genpart_gen","genpart_reachedEE","genpart_energy","genpart_eta", "genpart_pid","genpart_posx","genpart_posy","genpart_posz"]
+    branches = ["genpart_gen","genpart_reachedEE","genpart_energy","genpart_eta","genpart_phi", "genpart_pid","genpart_posx","genpart_posy","genpart_posz"]
     #branches += ["rechit_x", "rechit_y", "rechit_z", "rechit_energy","rechit_layer",'rechit_flags','rechit_eta']
     branches += ["rechit_x", "rechit_y", "rechit_z", "rechit_energy","rechit_layer",'rechit_flags','rechit_cluster2d','cluster2d_multicluster','rechit_eta','rechit_phi']
     array = root2array(fname,
@@ -39,6 +40,14 @@ def store_hits(fname = "../ntuples/hgcalNtuple_ele15_n100_testhelper.root"):
 
     n_parts = 0
 
+    pca_widths = []
+    #fig = plt.figure(figsize=(10, 8))
+    #ax = plt.subplot()
+
+    part_clust_data = []
+
+    print 80*"#"
+    print("Reading data from tree")
     for event in array:
 
         if n_parts > max_parts: break
@@ -58,22 +67,29 @@ def store_hits(fname = "../ntuples/hgcalNtuple_ele15_n100_testhelper.root"):
         z_arr = event['genpart_posz'][selected_genparts]
 
         if len(x_arr) < 1: continue
-        print "Found %i gen particles" % len(x_arr)
+        #print "Found %i gen particles" % len(x_arr)
         n_parts += len(x_arr)
 
+        eta_arr = event['genpart_eta'][selected_genparts]
+        phi_arr = event['genpart_phi'][selected_genparts]
+        ene_arr = event['genpart_energy'][selected_genparts]
 
-        fig = plt.figure(figsize=(10, 8))
-        ax = plt.subplot(projection='3d')
+        #fig = plt.figure(figsize=(10, 8))
+        #ax = plt.subplot(projection='3d')
 
+        particles = []
         ## Plot particle trajectory
         for i_part,xa in enumerate(x_arr):
-            #print x_arr[i_part].shape
+            particles.append(Particle( ene_arr[i_part], eta_arr[i_part], phi_arr[i_part] ))
+            ##print x_arr[i_part].shape
             if len(x_arr[i_part]) < 1: continue
 
+            #print "Particle ene/eta/phi", ene_arr[i_part], eta_arr[i_part], phi_arr[i_part]
+
             max_lay = min(40,max_layers)
-            #ax.plot(x_arr[i_part][:max_layers],z_arr[i_part][:max_layers],y_arr[i_part][:max_layers], '--r')
+            #ax.plot(x_arr[i_part][:max_layers],z_arr[i_part][:max_layers],y_arr[i_part][:max_layers], '--b')
             layers = np.array(range(1,max_lay+1))
-            #ax.plot(x_arr[i_part][:max_lay],layers,y_arr[i_part][:max_lay], '--r')
+            #ax.plot(x_arr[i_part][:max_lay],layers,y_arr[i_part][:max_lay], '--b')
 
         if len(x_arr[i_part]) < 1: continue
 
@@ -87,8 +103,8 @@ def store_hits(fname = "../ntuples/hgcalNtuple_ele15_n100_testhelper.root"):
         y_arr = event['rechit_y'][sel_hit_indices]
         #x_arr = event['rechit_eta'][sel_hit_indices]
         #y_arr = event['rechit_phi'][sel_hit_indices]
-        #z_arr = event['rechit_z'][sel_hit_indices]
-        z_arr = event['rechit_layer'][sel_hit_indices]
+        z_arr = event['rechit_z'][sel_hit_indices]
+        #z_arr = event['rechit_layer'][sel_hit_indices]
 
         sample_weights = event['rechit_energy'][sel_hit_indices]
 
@@ -96,25 +112,62 @@ def store_hits(fname = "../ntuples/hgcalNtuple_ele15_n100_testhelper.root"):
         #z_arr -= 320
         #z_arr /= 10.
 
-
         if len(sample_weights) < 20: continue
-        print("Found %i hits" % len(sample_weights))
+        #print("Found %i hits" % len(sample_weights))
 
+        '''
         rh_cl2d = event['rechit_cluster2d'][sel_hit_indices]
         rh_mcl = event['cluster2d_multicluster'][rh_cl2d]
 
         n_multicl = set(rh_mcl)
         colors = [plt.cm.Spectral(each) for each in np.linspace(0, 1, len(n_multicl))]
-
+        '''
         ## Plot long energy profile
-        #n,_ ,_ = ax.hist(z_arr, np.arange(28), weights = sample_weights)
 
-        ax.scatter(x_arr, z_arr, y_arr, c = rh_mcl, s = sample_weights*100)
+        #ax.scatter(x_arr, z_arr, y_arr, c = rh_mcl, s = sample_weights*100)
 
-        fig.tight_layout()
+        ##cluster
+        X = np.column_stack((z_arr,x_arr,y_arr))
+        clusters = my_cluster(X, sample_weights)
+
+        if clusters:
+            part_clust_data.append((particles,clusters))
+
+        '''
+        for cluster in clusters:
+            if cluster.pca:
+                #print cluster.energy
+                pcaw = cluster.pca.explained_variance_
+                pcaw /= np.sum(cluster.pca.explained_variance_)
+                pca_widths.append(pcaw)
+            ## print hits of cluster
+            ax.scatter(cluster.hits[:, 1], cluster.hits[:, 0], cluster.hits[:,2], s = cluster.energies*100)
+
+            #if pcaw1 > 0.5:
+        #    pca_widths.append(pcaw1)
+
         plt.title('Event %i' %i_ev)
-        #if not ax.empty:
         plt.show()
+        '''
+
+    analyzer(part_clust_data, figtitle = 'Rechit')
+    '''
+    #n,_ ,_ = ax.hist(z_arr, np.arange(28), weights = sample_weights)
+    pca_widths = np.array(pca_widths)
+    #print pca_widths[:,0]
+    #print pca_widths[:,1]
+    ax.hist(1-pca_widths[:,0], np.linspace(0,0.1,50))
+    ax.hist(pca_widths[:,1], np.linspace(0,0.1,50))
+    ax.hist(pca_widths[:,2], np.linspace(0,0.1,50))
+
+    fig.tight_layout()
+
+    #if not ax.empty:
+    print i_ev, n_parts
+    plt.title('RH')
+
+    plt.show()
+    '''
 
 def main(fname):
     global mip_calibs
@@ -131,10 +184,10 @@ if __name__ == "__main__":
             fname = sys.argv[1]
         else:
             fname = sys.argv[1]
-        print '# Input file is', fname
+        #print '# Input file is', fname
         main(fname)
     else:
-        print("No input files given!")
+        #print("No input files given!")
         main()
 
     # load tree
