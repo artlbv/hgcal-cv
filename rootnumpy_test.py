@@ -17,9 +17,9 @@ from wpca import WPCA, EMPCA
 
 #ROOT.gROOT.SetBatch(1)
 
-max_events = 50
+max_events = 5
 #max_hits
-max_parts = 100
+max_parts = 1
 
 mip_calibs = {}
 
@@ -136,8 +136,8 @@ def store_hits(fname = "../ntuples/hgcalNtuple_ele15_n100_testhelper.root"):
 
         x_arr = event['rechit_x'][sel_hit_indices]
         y_arr = event['rechit_y'][sel_hit_indices]
-        #z_arr = event['rechit_z'][sel_hit_indices]
-        z_arr = event['rechit_layer'][sel_hit_indices]
+        z_arr = event['rechit_z'][sel_hit_indices]
+        #z_arr = event['rechit_layer'][sel_hit_indices]
 
         sample_weights = event['rechit_energy'][sel_hit_indices]
 
@@ -161,15 +161,17 @@ def store_hits(fname = "../ntuples/hgcalNtuple_ele15_n100_testhelper.root"):
         X = np.column_stack((z_arr,x_arr,y_arr))
         print X.shape, X.ndim
 
-        AA = sklearn.metrics.pairwise.euclidean_distances(X, X)
+        #AA = sklearn.metrics.pairwise.euclidean_distances(X, X)
+        #AA = sklearn.metrics.pairwise.rbf_kernel(X[:,[1,2]], gamma=.5)
+        AA = sklearn.metrics.pairwise.rbf_kernel(X, gamma=.5)
         BB = np.ravel(AA)
         BB = BB[BB > 0]
         #bins1 = np.linspace(np.min(BB),np.max(BB),100)
-        bins1 = np.linspace(0,50,50)
+        bins1 = np.linspace(0,np.max(BB),50)
         n,_ ,_ = ax1.hist(BB, bins1, normed=True)
 
         # Sum hits closer than eps per each hit
-        eps = 3
+        eps = 0.1
         BB = (AA < eps).sum(axis=1)
         BB = np.ravel(BB)
         #bins2 = np.linspace(np.min(BB),np.max(BB),int(np.max(BB)-np.min(BB)+1))
@@ -233,7 +235,9 @@ def store_hits(fname = "../ntuples/hgcalNtuple_ele15_n100_testhelper.root"):
                 if energy > -1:
 
                     ## plot distances
-                    AA = sklearn.metrics.pairwise.euclidean_distances(xyz,xyz)
+                    #AA = sklearn.metrics.pairwise.euclidean_distances(xyz,xyz)
+                    #AA = sklearn.metrics.pairwise.rbf_kernel(xyz[:,[1,2]], gamma=.5)
+                    AA = sklearn.metrics.pairwise.rbf_kernel(xyz, gamma=.5)
                     BB = np.ravel(AA)
                     BB = BB[BB > 0]
                     n,_ ,_ = ax1.hist(BB, bins1, normed=True, alpha = 0.5, color = tuple(col))

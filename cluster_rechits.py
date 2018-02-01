@@ -19,9 +19,9 @@ from cluster_common import *
 #ROOT.gROOT.SetBatch(1)
 
 max_events = 10000
-max_parts = 10000
+max_parts = 1000
 
-max_layers = 28
+max_layers = 40#28
 
 def store_hits(fname = "../ntuples/hgcalNtuple_ele15_n100_testhelper.root"):
 
@@ -55,10 +55,11 @@ def store_hits(fname = "../ntuples/hgcalNtuple_ele15_n100_testhelper.root"):
         i_ev += 1
 
         selected_genparts = (event['genpart_gen'] > 0)
-        selected_genparts &= (event['genpart_reachedEE'] > 1)#
+        selected_genparts &= (event['genpart_reachedEE'] > 1)
+        #selected_genparts &= (event['genpart_reachedEE'] < 1)
         selected_genparts &= (event['genpart_energy'] > 5)
         selected_genparts &= (event['genpart_eta'] > 0)
-        #selected_genparts &= (event['genpart_eta'] > 2.)
+        selected_genparts &= (event['genpart_eta'] > 2.3)
         #selected_genparts &= (abs(event['genpart_pid']) == 22)
         #selected_genparts &= (abs(event['genpart_eta']) > 2.3)
 
@@ -91,7 +92,7 @@ def store_hits(fname = "../ntuples/hgcalNtuple_ele15_n100_testhelper.root"):
             layers = np.array(range(1,max_lay+1))
             #ax.plot(x_arr[i_part][:max_lay],layers,y_arr[i_part][:max_lay], '--b')
 
-        if len(x_arr[i_part]) < 1: continue
+        #if len(x_arr[i_part]) < 1: continue
 
         ### HITS
         sel_hit_indices = (event['rechit_energy'] > -0.01)
@@ -124,7 +125,7 @@ def store_hits(fname = "../ntuples/hgcalNtuple_ele15_n100_testhelper.root"):
         '''
         ## Plot long energy profile
 
-        #ax.scatter(x_arr, z_arr, y_arr, c = rh_mcl, s = sample_weights*100)
+        #ax.scatter(x_arr, z_arr, y_arr, s = 0.1, c= 'black')
 
         ##cluster
         X = np.column_stack((z_arr,x_arr,y_arr))
@@ -132,6 +133,8 @@ def store_hits(fname = "../ntuples/hgcalNtuple_ele15_n100_testhelper.root"):
 
         if clusters:
             part_clust_data.append((particles,clusters))
+        else:
+            continue
 
         '''
         for cluster in clusters:
@@ -141,7 +144,7 @@ def store_hits(fname = "../ntuples/hgcalNtuple_ele15_n100_testhelper.root"):
                 pcaw /= np.sum(cluster.pca.explained_variance_)
                 pca_widths.append(pcaw)
             ## print hits of cluster
-            ax.scatter(cluster.hits[:, 1], cluster.hits[:, 0], cluster.hits[:,2], s = cluster.energies*100)
+            #ax.scatter(cluster.hits[:, 1], cluster.hits[:, 0], cluster.hits[:,2], s = cluster.energies*100)
 
             #if pcaw1 > 0.5:
         #    pca_widths.append(pcaw1)
@@ -149,7 +152,6 @@ def store_hits(fname = "../ntuples/hgcalNtuple_ele15_n100_testhelper.root"):
         plt.title('Event %i' %i_ev)
         plt.show()
         '''
-
     analyzer(part_clust_data, figtitle = 'Rechit')
     '''
     #n,_ ,_ = ax.hist(z_arr, np.arange(28), weights = sample_weights)

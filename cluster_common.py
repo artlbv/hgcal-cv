@@ -70,6 +70,9 @@ class HGCcluster:
         # default empty PCA
         self.pca = None
 
+        # empty outliers
+        self.outliers = []
+
     def __repr__(self):
         string ="Cluster\tEnergy %f\t" %self.energy
         string += "Position x/y/z: %f, %f, %f \t" %(self.x,self.y,self.z)
@@ -95,7 +98,9 @@ class HGCcluster:
 def my_cluster(X, W = None):
     #print "start clusterig"
     db = DBSCAN(eps=3, min_samples=5).fit(X)
+    #db = DBSCAN(eps=3, min_samples = 5, algorithm = "auto").fit(X[:,[1,2]], sample_weight = W)
     #db = DBSCAN(eps=3, min_samples = 5, algorithm = "auto").fit(X, sample_weight = W)
+    #db = DBSCAN(eps=3, min_samples = 20, algorithm = "auto").fit(X, sample_weight = W)
     #print "done clusterig"
 
     core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
@@ -135,11 +140,13 @@ def my_cluster(X, W = None):
 
         clusters.append(cluster)
 
-        '''
         ## add outliers
         xyz = X[class_member_mask & ~core_samples_mask]
         w = W[class_member_mask & ~core_samples_mask]
 
+        cluster.outliers = xyz
+        cluster.outliers_ene = w
+        '''
         cluster = HGCcluster(xyz,w)
         clusters.append(cluster)
         '''
@@ -201,7 +208,7 @@ def calc_widths(X, W, ax):
     return pca.explained_variance_[1]
 
 
-def analyzer(part_clust_data, figtitle = 'Figure'):
+def analyzer(part_clust_data, figtitle = 'Figure', show_plot = True):
     print 80*"#"
     print("Analyzing data")
 
@@ -217,6 +224,7 @@ def analyzer(part_clust_data, figtitle = 'Figure'):
     ### PARTICLE CLUSTER MATCHING
     for particles, clusters in part_clust_data:
         for particle in particles:
+            if not clusters: continue
             for cluster in clusters:
                 if cluster.energy < 10: continue
                 #print particle.energy, cluster.energy
@@ -249,7 +257,6 @@ def analyzer(part_clust_data, figtitle = 'Figure'):
     '''
 
     ax = plt.subplot(221)
-    ax.set_title("mean: %f, stdev: %f" %(np.mean(eneRatios), np.std(eneRatios)) )
     plt.xlabel("Ecl/Egene")
     hist, bins, _  = plt.hist(eneRatios,50)
     bin_centres = (bins[:-1] + bins[1:])/2
@@ -259,41 +266,44 @@ def analyzer(part_clust_data, figtitle = 'Figure'):
     coeff, var_matrix = curve_fit(gauss, bin_centres , hist, p0=p0)
 
     hist_fit = gauss(bin_centres, *coeff)
+    #ax.set_title("mean: %f, stdev: %f" %(np.mean(eneRatios), np.std(eneRatios)) )
+    ax.set_title("mean: %f, sigma: %f" %(coeff[1],coeff[2]))
 
     plt.plot(bin_centres, hist_fit, label='Fitted data')
 
     print coeff
 
-
     pca_variance = np.array(pca_variance)
     ax = plt.subplot(222)
     ax.set_title("PCA variance ratios")
     ax.hist(1-pca_variance[:,0], np.linspace(0,0.1,50), alpha = 0.8,
-            label = '1 - PCA1, mean/std: %0.2f/%0.2f' %(np.mean(1-pca_variance[:,0]),np.std(1-pca_variance[:,0])))
+            label = '1 - PCA1, mean/std: %0.3f/%0.3f' %(np.mean(1-pca_variance[:,0]),np.std(1-pca_variance[:,0])))
     ax.hist(pca_variance[:,1], np.linspace(0,0.1,50),
-            alpha = 0.8, label = 'PCA2, mean/std: %0.2f/%0.2f' %(np.mean(pca_variance[:,2]),np.std(pca_variance[:,1])))
+            alpha = 0.8, label = 'PCA2, mean/std: %0.3f/%0.3f' %(np.mean(pca_variance[:,2]),np.std(pca_variance[:,1])))
     ax.hist(pca_variance[:,2], np.linspace(0,0.1,50), alpha = 0.8,
-            label = 'PCA3, mean/std: %0.2f/%0.2f' %(np.mean(pca_variance[:,2]),np.std(pca_variance[:,2])))
+            label = 'PCA3, mean/std: %0.3f/%0.3f' %(np.mean(pca_variance[:,2]),np.std(pca_variance[:,2])))
 
     plt.legend()
 
     pca_widths = np.array(pca_widths)
     ax = plt.subplot(223)
     ax.set_title("PCA variance")
-    ax.hist(pca_widths[:,0], 40, alpha = 0.8, label = 'PCA1, mean/std: %0.2f/%0.2f' %(np.mean(pca_widths[:,0]),np.std(pca_widths[:,0])))
+    bins = np.linspace(0,30,50)
+    ax.hist(pca_widths[:,0], bins, alpha = 0.8, label = 'PCA1, mean/std: %0.3f/%0.3f' %(np.mean(pca_widths[:,0]),np.std(pca_widths[:,0])))
     plt.legend()
 
     ax = plt.subplot(224)
     ax.set_title("PCA variance")
-    ax.hist(pca_widths[:,1], 40, alpha = 0.8, label = 'PCA2, mean/std: %0.2f/%0.2f' %(np.mean(pca_widths[:,1]),np.std(pca_widths[:,1])))
-    ax.hist(pca_widths[:,2], 40, alpha = 0.8, label = 'PCA3, mean/std: %0.2f/%0.2f' %(np.mean(pca_widths[:,2]),np.std(pca_widths[:,2])))
+    bins = np.linspace(0,0.5,50)
+    ax.hist(pca_widths[:,1], bins, alpha = 0.8, label = 'PCA2, mean/std: %0.3f/%0.3f' %(np.mean(pca_widths[:,1]),np.std(pca_widths[:,1])))
+    ax.hist(pca_widths[:,2], bins, alpha = 0.8, label = 'PCA3, mean/std: %0.3f/%0.3f' %(np.mean(pca_widths[:,2]),np.std(pca_widths[:,2])))
     plt.legend()
 
 
     fig.tight_layout()
     print("Plotting")
 
-    plt.show()
+    if show_plot: plt.show()
 
     return fig
 
@@ -348,3 +358,141 @@ def analyzeEnergy(part_clust_data, title = ''):
     sigma = abs(coeff[2])
 
     return sigma
+
+def get_event_array(fname, hit_type = 'rechit', max_events = 10):
+
+    branches = ["genpart_gen","genpart_reachedEE","genpart_energy","genpart_eta","genpart_phi", "genpart_pid","genpart_posx","genpart_posy","genpart_posz"]
+    if hit_type == 'rechit':
+        branches += ["rechit_x", "rechit_y", "rechit_z", "rechit_energy","rechit_layer",'rechit_flags','rechit_eta']
+        treename = 'ana/hgc'
+    elif hit_type == 'tc':
+        branches += ["tc_x", "tc_y", "tc_z", "tc_energy","tc_layer"]
+        treename = 'hgcalTriggerNtuplizer/HGCalTriggerNtuple'
+
+    print("## Reading data from tree")
+    array = root2array(fname,
+                       treename=treename,
+                       branches = branches,
+                       stop = max_events
+    )
+    print('## Done reading')
+
+    return array
+
+
+def get_genparticles(event):
+    particles = []
+
+    selected_genparts = (event['genpart_gen'] > 0)
+    selected_genparts &= (event['genpart_reachedEE'] > 1)
+    #selected_genparts &= (event['genpart_reachedEE'] < 1)
+    selected_genparts &= (event['genpart_energy'] > 5)
+    selected_genparts &= (event['genpart_eta'] > 0)
+    #selected_genparts &= (event['genpart_eta'] > 2.2)
+    #selected_genparts &= (abs(event['genpart_pid']) == 22)
+    #selected_genparts &= (abs(event['genpart_eta']) > 2.3)
+
+
+    if False:
+        #if True:
+        ## select particles in a specific cone
+        selected_genparts &= (abs(event['genpart_eta']) > 1.6)
+        selected_genparts &= (abs(event['genpart_eta']) < 2.2)
+        selected_genparts &= ((event['genpart_phi']) > 1.)
+        selected_genparts &= ((event['genpart_phi']) < 1.3)
+
+    if sum(selected_genparts) == 0: return particles
+
+    '''
+    x_arr = event['genpart_posx'][selected_genparts]
+    y_arr = event['genpart_posy'][selected_genparts]
+    z_arr = event['genpart_posz'][selected_genparts]
+    '''
+
+    eta_arr = event['genpart_eta'][selected_genparts]
+    phi_arr = event['genpart_phi'][selected_genparts]
+    ene_arr = event['genpart_energy'][selected_genparts]
+
+    #print "Found %i gen particles" % len(x_arr)
+    for i_part,xa in enumerate(ene_arr):
+        particles.append(Particle( ene_arr[i_part], eta_arr[i_part], phi_arr[i_part] ))
+
+    return particles
+    '''
+    eta_arr = event['genpart_eta'][selected_genparts]
+    phi_arr = event['genpart_phi'][selected_genparts]
+    ene_arr = event['genpart_energy'][selected_genparts]
+
+    ## Plot particle trajectory
+    for i_part,xa in enumerate(x_arr):
+        particles.append(Particle( ene_arr[i_part], eta_arr[i_part], phi_arr[i_part] ))
+        ##print x_arr[i_part].shape
+        if len(x_arr[i_part]) < 1: continue
+
+        #print "Particle ene/eta/phi", ene_arr[i_part], eta_arr[i_part], phi_arr[i_part]
+
+        max_lay = min(40,max_layers)
+        #ax.plot(x_arr[i_part][:max_layers],z_arr[i_part][:max_layers],y_arr[i_part][:max_layers], '--b')
+        layers = np.array(range(1,max_lay+1))
+        #ax.plot(x_arr[i_part][:max_lay],layers,y_arr[i_part][:max_lay], '--b')
+
+    '''
+
+def get_hits(event, hit_type = 'rechit', max_layer = 28):
+
+    min_energy = -0.1
+
+    if hit_type == 'rechit':
+        ### HITS
+        sel_hit_indices = (event['rechit_energy'] > min_energy)
+        sel_hit_indices &= (event['rechit_layer'] <= max_layer)
+        sel_hit_indices &= (event['rechit_flags'] < 3)
+        sel_hit_indices &= (event['rechit_z'] > 0.)
+
+        x_arr = event['rechit_x'][sel_hit_indices]
+        y_arr = event['rechit_y'][sel_hit_indices]
+        z_arr = event['rechit_z'][sel_hit_indices]
+        #z_arr = event['rechit_layer'][sel_hit_indices]
+        #x_arr = event['rechit_eta'][sel_hit_indices]
+        #y_arr = event['rechit_phi'][sel_hit_indices]
+
+        #z_arr -=320
+        #z_arr /= 10.
+
+        sample_weights = event['rechit_energy'][sel_hit_indices]
+    else:
+        sel_hit_indices = (event['tc_energy'] > min_energy)
+        sel_hit_indices &= (event['tc_layer'] <= max_layer)
+        sel_hit_indices &= (event['tc_z'] > 0.)
+
+        x_arr = event['tc_x'][sel_hit_indices]
+        y_arr = event['tc_y'][sel_hit_indices]
+        z_arr = event['tc_z'][sel_hit_indices]
+        #z_arr = event['tc_layer'][sel_hit_indices]
+
+        sample_weights = event['tc_energy'][sel_hit_indices]
+
+    X = np.column_stack((z_arr,x_arr,y_arr))
+    return X, sample_weights
+
+def get_flat_distances(X, kernel = 'rbf'):
+
+    print len(X)
+    '''
+    print np.max(X[:,[0]])
+    print np.max(X[:,[1]])
+    print np.max(X[:,[2]])
+    '''
+
+    #X = X[:,[1,2]]
+    #X = X[:,[0]]
+
+    if kernel == 'rbf':
+        D = sklearn.metrics.pairwise.rbf_kernel(X, gamma=2)
+    elif kernel == 'euclid':
+        D = sklearn.metrics.pairwise.euclidean_distances(X,X)
+
+    D = np.ravel(np.triu(D, k = 1))
+    D = D[D>0]
+
+    return D

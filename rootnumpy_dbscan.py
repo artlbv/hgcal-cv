@@ -115,7 +115,7 @@ def store_hits(fname = "../ntuples/hgcalNtuple_ele15_n100_testhelper.root"):
         z_arr = event['rechit_z']
         '''
         # with selection
-        sel_hit_indices = (event['rechit_energy'] > 0.01) & (event['rechit_z'] > 0.) & (event['rechit_layer'] < 29.) & (event['rechit_flags'] < 3) & (event['rechit_eta'] < 2.2)
+        sel_hit_indices = (event['rechit_energy'] > 0.01) & (event['rechit_z'] > 0.) & (event['rechit_layer'] < 29.) & (event['rechit_flags'] < 3)# & (event['rechit_eta'] < 2.2)
         #sel_hit_indices = (event['rechit_energy'] > -0.01) & (event['rechit_z'] > 0.) & (event['rechit_layer'] < 39.) & (event['rechit_flags'] < 3)
         #sel_hit_indices = (event['rechit_energy'] > 0.01) & (event['rechit_layer'] < 39.) & (event['rechit_flags'] < 3)
         x_arr = event['rechit_x'][sel_hit_indices]
@@ -129,8 +129,8 @@ def store_hits(fname = "../ntuples/hgcalNtuple_ele15_n100_testhelper.root"):
         if len(sample_weights) < 20: continue
 
         ## rescale Z
-        z_arr -= 320
-        z_arr /= 10.
+        #z_arr -= 320
+        #z_arr /= 10.
 
         '''
         if x_arr == None:
@@ -165,6 +165,8 @@ def store_hits(fname = "../ntuples/hgcalNtuple_ele15_n100_testhelper.root"):
         # Number of clusters in labels, ignoring noise if present.
         n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
         print('Estimated number of clusters: %d' % n_clusters_)
+
+        if n_clusters_ < 1: continue
 
         # Plot result
         #fig = plt.figure(figsize=(15, 8))

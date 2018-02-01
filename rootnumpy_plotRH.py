@@ -91,7 +91,7 @@ def store_hits(fname = "../ntuples/hgcalNtuple_ele15_n100_testhelper.root"):
         i_ev += 1
 
         # with selection
-        sel_hit_indices = (event['rechit_energy'] > 0.01) & (event['rechit_z'] > 0.) & (event['rechit_layer'] < 29.) & (event['rechit_flags'] < 2) & (event['rechit_eta'] < 2.2)
+        sel_hit_indices = (event['rechit_energy'] > 0.01) & (event['rechit_z'] > 0.) & (event['rechit_layer'] < 49.) & (event['rechit_flags'] < 2) & (event['rechit_eta'] < 2.2)
         #sel_hit_indices = (event['rechit_energy'] > -0.01) & (event['rechit_z'] > 0.) & (event['rechit_layer'] < 39.) & (event['rechit_flags'] < 1)
         #sel_hit_indices = (event['rechit_energy'] > 0.01) & (event['rechit_layer'] < 39.) & (event['rechit_flags'] < 1)
         x_arr = event['rechit_x'][sel_hit_indices]

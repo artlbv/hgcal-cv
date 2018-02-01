@@ -17,8 +17,8 @@ from wpca import WPCA, EMPCA
 
 from cluster_common import *
 
-max_events = 1000
-max_parts = 1000
+max_events = 10000
+max_parts = 10000
 
 max_layers = 28
 
@@ -50,7 +50,7 @@ def store_hits(fname = "../ntuples/hgcalNtuple_ele15_n100_testhelper.root"):
 
         selected_genparts = (event['genpart_gen'] > 0)
         selected_genparts &= (event['genpart_reachedEE'] > 1)#
-        selected_genparts &= (event['genpart_energy'] > 0.1)
+        selected_genparts &= (event['genpart_energy'] > 5)
         selected_genparts &= (event['genpart_eta'] > 0)
         #selected_genparts &= (event['genpart_eta'] > 2.)
         #selected_genparts &= (abs(event['genpart_pid']) == 22)
@@ -87,7 +87,7 @@ def store_hits(fname = "../ntuples/hgcalNtuple_ele15_n100_testhelper.root"):
         if len(x_arr[i_part]) < 1: continue
 
         ### HITS
-        sel_hit_indices = (event['tc_energy'] > 0.01)
+        sel_hit_indices = (event['tc_energy'] > -0.01)
         sel_hit_indices &= (event['tc_layer'] < max_layers)
         #sel_hit_indices &= (event['tc_layer'] %4 == 0 )
         sel_hit_indices &= (event['tc_z'] > 0.)
@@ -103,7 +103,7 @@ def store_hits(fname = "../ntuples/hgcalNtuple_ele15_n100_testhelper.root"):
         #z_arr -= 320
         #z_arr /= 10.
 
-        if len(sample_weights) < 20: continue
+        if len(sample_weights) < 10: continue
         #print("Found %i hits" % len(sample_weights))
 
         ##cluster
