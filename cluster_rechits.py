@@ -59,7 +59,7 @@ def store_hits(fname = "../ntuples/hgcalNtuple_ele15_n100_testhelper.root"):
         #selected_genparts &= (event['genpart_reachedEE'] < 1)
         selected_genparts &= (event['genpart_energy'] > 5)
         selected_genparts &= (event['genpart_eta'] > 0)
-        selected_genparts &= (event['genpart_eta'] > 2.3)
+        #selected_genparts &= (event['genpart_eta'] > 2.3)
         #selected_genparts &= (abs(event['genpart_pid']) == 22)
         #selected_genparts &= (abs(event['genpart_eta']) > 2.3)
 

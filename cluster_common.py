@@ -97,9 +97,9 @@ class HGCcluster:
 
 def my_cluster(X, W = None):
     #print "start clusterig"
-    db = DBSCAN(eps=3, min_samples=5).fit(X)
+    #db = DBSCAN(eps=3, min_samples=5).fit(X)
     #db = DBSCAN(eps=3, min_samples = 5, algorithm = "auto").fit(X[:,[1,2]], sample_weight = W)
-    #db = DBSCAN(eps=3, min_samples = 5, algorithm = "auto").fit(X, sample_weight = W)
+    db = DBSCAN(eps=3, min_samples = 5, algorithm = "auto").fit(X, sample_weight = W)
     #db = DBSCAN(eps=3, min_samples = 20, algorithm = "auto").fit(X, sample_weight = W)
     #print "done clusterig"
 
@@ -365,9 +365,11 @@ def get_event_array(fname, hit_type = 'rechit', max_events = 10):
     if hit_type == 'rechit':
         branches += ["rechit_x", "rechit_y", "rechit_z", "rechit_energy","rechit_layer",'rechit_flags','rechit_eta']
         treename = 'ana/hgc'
-    elif hit_type == 'tc':
+    elif hit_type.lower() == 'tc':
         branches += ["tc_x", "tc_y", "tc_z", "tc_energy","tc_layer"]
         treename = 'hgcalTriggerNtuplizer/HGCalTriggerNtuple'
+    else:
+        print('This hit type does not exist: ', hit_type)
 
     print("## Reading data from tree")
     array = root2array(fname,
@@ -393,7 +395,7 @@ def get_genparticles(event):
     #selected_genparts &= (abs(event['genpart_eta']) > 2.3)
 
 
-    if False:
+    if True:
         #if True:
         ## select particles in a specific cone
         selected_genparts &= (abs(event['genpart_eta']) > 1.6)
@@ -458,9 +460,9 @@ def get_hits(event, hit_type = 'rechit', max_layer = 28):
 
         #z_arr -=320
         #z_arr /= 10.
-
         sample_weights = event['rechit_energy'][sel_hit_indices]
-    else:
+
+    elif hit_type.lower() == 'tc':
         sel_hit_indices = (event['tc_energy'] > min_energy)
         sel_hit_indices &= (event['tc_layer'] <= max_layer)
         sel_hit_indices &= (event['tc_z'] > 0.)

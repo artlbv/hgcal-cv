@@ -18,8 +18,8 @@ from cluster_common import *
 
 #ROOT.gROOT.SetBatch(1)
 
-max_events = 10
-max_parts = 10
+max_events = 100
+max_parts = 1
 
 max_layers = 28
 
@@ -61,23 +61,24 @@ def store_hits(fname = "../ntuples/hgcalNtuple_ele15_n100_testhelper.root"):
         ### HITS
         hits_xyz, hits_energies = get_hits(event, hit_type = hit_type, max_layer = max_layers)
 
-        hits = hits_xyz
-        enes = hits_energies
-        '''
+        #hits = hits_xyz
+        #enes = hits_energies
+
         #hits.append(hits_xyz)
         #enes.append(hits_energies)
         hits = np.concatenate((hits, hits_xyz))
         enes = np.concatenate((enes, hits_energies))
 
-        # fixing hack
-        hits = np.delete(hits, (0), axis = 0)
-        enes = np.delete(enes, (0), axis = 0)
+    # fixing hack
+    hits = np.delete(hits, (0), axis = 0)
+    enes = np.delete(enes, (0), axis = 0)
 
-        print('Plotting')
-        #ax.scatter(hits[:, 1], hits[:, 0], hits[:,2], s = 0.01, c = 'black')#enes*100)
+    print('Plotting')
+    print n_parts
 
-        if True:
-        '''
+    #ax.scatter(hits[:, 1], hits[:, 0], hits[:,2], s = 0.01, c = 'black')#enes*100)
+
+    if True:
 
         ## CLUSTER
         #clusters = my_cluster(hits_xyz, hits_energies)
@@ -85,10 +86,12 @@ def store_hits(fname = "../ntuples/hgcalNtuple_ele15_n100_testhelper.root"):
 
         if clusters:
             part_clust_data.append((particles,clusters))
-        else: continue
+        #else: continue
 
         fig = plt.figure(figsize=(10, 8))
         ax = plt.subplot(projection = '3d')
+
+        ax.scatter(hits[:, 1], hits[:, 0], hits[:,2], s = 0.01, c = 'black')#enes*100)
 
         colors = [plt.cm.Spectral(each)
           for each in np.linspace(0, 1, len(clusters))]
