@@ -395,7 +395,7 @@ def get_genparticles(event):
     #selected_genparts &= (abs(event['genpart_eta']) > 2.3)
 
 
-    if True:
+    if False:
         #if True:
         ## select particles in a specific cone
         selected_genparts &= (abs(event['genpart_eta']) > 1.6)
